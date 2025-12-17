@@ -30,6 +30,7 @@ class SaveTagCoverData {
   QString cover_filename;
   QByteArray cover_data;
   QString cover_mimetype;
+  int id3v2_version;  // ID3v2 version to use when saving (3 or 4), 0 = use default
 };
 
 #endif  // SAVETAGCOVERDATA_H

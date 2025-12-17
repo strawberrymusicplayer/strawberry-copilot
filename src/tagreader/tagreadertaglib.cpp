@@ -606,6 +606,11 @@ void TagReaderTagLib::ParseID3v2Tags(TagLib::ID3v2::Tag *tag, QString *disc, QSt
 
   TagLib::ID3v2::FrameListMap map = tag->frameListMap();
 
+  // Read ID3v2 version
+  if (tag->header()) {
+    song->set_id3v2_version(tag->header()->majorVersion());
+  }
+
   if (map.contains(kID3v2_Disc)) *disc = TagLibStringToQString(map[kID3v2_Disc].front()->toString()).trimmed();
   if (map.contains(kID3v2_Composer)) song->set_composer(map[kID3v2_Composer].front()->toString());
   if (map.contains(kID3v2_ComposerSort)) song->set_composersort(map[kID3v2_ComposerSort].front()->toString());
@@ -1265,7 +1270,31 @@ TagReaderResult TagReaderTagLib::WriteFile(const QString &filename, const Song &
     }
   }
 
-  const bool success = fileref->save();
+  // Determine ID3v2 version to use
+  int id3v2_version = save_tag_cover_data.id3v2_version;
+  if (id3v2_version != 3 && id3v2_version != 4) {
+    id3v2_version = 4;  // Default to v2.4 if not specified
+  }
+
+  bool success = false;
+  
+  // For MPEG files, use save with ID3v2 version parameter
+  if (TagLib::MPEG::File *file_mpeg = dynamic_cast<TagLib::MPEG::File*>(fileref->file())) {
+    success = file_mpeg->save(TagLib::MPEG::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+  }
+  // For WAV files with ID3v2 tags
+  else if (TagLib::RIFF::WAV::File *file_wav = dynamic_cast<TagLib::RIFF::WAV::File*>(fileref->file())) {
+    success = file_wav->save(TagLib::RIFF::WAV::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+  }
+  // For AIFF files with ID3v2 tags
+  else if (TagLib::RIFF::AIFF::File *file_aiff = dynamic_cast<TagLib::RIFF::AIFF::File*>(fileref->file())) {
+    success = file_aiff->save(TagLib::RIFF::AIFF::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+  }
+  // For all other file types, use default save
+  else {
+    success = fileref->save();
+  }
+
 #ifdef Q_OS_LINUX
   if (success) {
     // Linux: inotify doesn't seem to notice the change to the file unless we change the timestamps as well. (this is what touch does)

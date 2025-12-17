@@ -840,6 +840,44 @@ void EditTagDialog::SelectionChanged() {
   ui_->artistsort->setEnabled(artistsort_enabled);
   ui_->albumsort->setEnabled(albumsort_enabled);
 
+  // Handle ID3v2 version selector visibility and value
+  bool has_id3v2_support = false;
+  int id3v2_version = 0;
+  bool id3v2_version_different = false;
+  
+  for (const QModelIndex &idx : indexes) {
+    const Song &song = data_[idx.row()].current_;
+    // Check if the file supports ID3v2 tags (MPEG, WAV, AIFF)
+    if (song.filetype() == Song::FileType::MPEG || 
+        song.filetype() == Song::FileType::WAV || 
+        song.filetype() == Song::FileType::AIFF) {
+      has_id3v2_support = true;
+      if (id3v2_version == 0) {
+        id3v2_version = song.id3v2_version();
+      }
+      else if (id3v2_version != song.id3v2_version()) {
+        id3v2_version_different = true;
+      }
+    }
+  }
+  
+  ui_->label_id3v2_version->setVisible(has_id3v2_support);
+  ui_->combobox_id3v2_version->setVisible(has_id3v2_support);
+  
+  if (has_id3v2_support) {
+    // Set default based on existing version(s)
+    if (id3v2_version_different || id3v2_version == 0) {
+      // Mixed versions or unknown - default to ID3v2.4
+      ui_->combobox_id3v2_version->setCurrentIndex(1);  // 2.4
+    }
+    else if (id3v2_version == 3) {
+      ui_->combobox_id3v2_version->setCurrentIndex(0);  // 2.3
+    }
+    else {
+      ui_->combobox_id3v2_version->setCurrentIndex(1);  // 2.4
+    }
+  }
+
 }
 
 void EditTagDialog::UpdateUI(const QModelIndexList &indexes) {
@@ -1371,6 +1409,15 @@ void EditTagDialog::SaveData() {
         }
         save_tag_cover_data.cover_data = ref.cover_result_.image_data;
       }
+      
+      // Set ID3v2 version based on user selection
+      if (ref.current_.filetype() == Song::FileType::MPEG || 
+          ref.current_.filetype() == Song::FileType::WAV || 
+          ref.current_.filetype() == Song::FileType::AIFF) {
+        // Get the selected version from combobox: 0 = v2.3, 1 = v2.4
+        save_tag_cover_data.id3v2_version = (ui_->combobox_id3v2_version->currentIndex() == 0) ? 3 : 4;
+      }
+      
       TagReaderClient::SaveOptions save_tags_options;
       if (save_tags) {
         save_tags_options |= TagReaderClient::SaveOption::Tags;

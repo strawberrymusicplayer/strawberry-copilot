@@ -25,8 +25,10 @@
 SaveTagCoverData::SaveTagCoverData(const QString &_cover_filename, const QByteArray &_cover_data, const QString &_cover_mimetype)
     : cover_filename(_cover_filename),
       cover_data(_cover_data),
-      cover_mimetype(_cover_mimetype) {}
+      cover_mimetype(_cover_mimetype),
+      id3v2_version(0) {}
 
 SaveTagCoverData::SaveTagCoverData(const QByteArray &_cover_data, const QString &_cover_mimetype)
     : cover_data(_cover_data),
-      cover_mimetype(_cover_mimetype) {}
+      cover_mimetype(_cover_mimetype),
+      id3v2_version(0) {}

@@ -707,6 +707,7 @@ void CollectionWatcher::ScanSubdirectory(const QString &path, const CollectionSu
       }
 
       // If the song is unavailable and nothing has changed, just mark it as available without re-scanning
+      // For CUE files with multiple sections, all sections share the same file and would have the same availability status
       if (matching_song.unavailable() && !changed && !missing_fingerprint && !missing_loudness_characteristics) {
         qLog(Debug) << "Unavailable song" << file << "restored without re-scanning.";
         t->readded_songs << matching_songs;

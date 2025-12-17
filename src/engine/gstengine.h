@@ -192,6 +192,8 @@ class GstEngine : public EngineBase, public GstBufferConsumer {
   State delayed_state_;
   bool delayed_state_pause_;
   quint64 delayed_state_offset_nanosec_;
+
+  QString pending_source_device_;
 };
 
 #endif  // GSTENGINE_H

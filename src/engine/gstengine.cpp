@@ -183,6 +183,11 @@ void GstEngine::StartPreloading(const QUrl &media_url, const QUrl &stream_url, c
 
   // No crossfading, so we can just queue the new URL in the existing pipeline and get gapless playback (hopefully)
   if (current_pipeline_) {
+    // Set the source device if one was extracted from the URL
+    if (!pending_source_device_.isEmpty()) {
+      current_pipeline_->SetSourceDevice(pending_source_device_);
+      pending_source_device_.clear();
+    }
     current_pipeline_->PrepareNextUrl(media_url, stream_url, gst_url, beginning_offset_nanosec, force_stop_at_end ? end_offset_nanosec : 0);
     // Add request to discover the stream
     if (discoverer_ && media_url.scheme() != u"spotify"_s) {
@@ -217,6 +222,12 @@ bool GstEngine::Load(const QUrl &media_url, const QUrl &stream_url, const Engine
 
   GstEnginePipelinePtr pipeline = CreatePipeline(media_url, stream_url, gst_url, static_cast<qint64>(beginning_offset_nanosec), force_stop_at_end ? end_offset_nanosec : 0, ebur128_loudness_normalizing_gain_db_);
   if (!pipeline) return false;
+
+  // Set the source device if one was extracted from the URL
+  if (!pending_source_device_.isEmpty()) {
+    pipeline->SetSourceDevice(pending_source_device_);
+    pending_source_device_.clear();
+  }
 
   GstEnginePipelinePtr old_pipeline = current_pipeline_;
   current_pipeline_ = pipeline;
@@ -830,6 +841,7 @@ QByteArray GstEngine::FixupUrl(const QUrl &url) {
     if (url.path().isEmpty()) {
       str = url.toString();
       str.remove(str.lastIndexOf(u'a'), 1);
+      pending_source_device_.clear();
     }
     else {
       // Currently, Gstreamer can't handle input CD devices inside cdda URL.
@@ -837,8 +849,7 @@ QByteArray GstEngine::FixupUrl(const QUrl &url) {
       // We keep the device in mind, and we will set it later using SourceSetupCallback
       QStringList path = url.path().split(u'/');
       str = QStringLiteral("cdda://%1").arg(path.takeLast());
-      QString device = path.join(u'/');
-      if (current_pipeline_) current_pipeline_->SetSourceDevice(device);
+      pending_source_device_ = path.join(u'/');
     }
     uri = str.toUtf8();
   }

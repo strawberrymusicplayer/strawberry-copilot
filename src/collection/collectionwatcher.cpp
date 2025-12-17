@@ -706,8 +706,13 @@ void CollectionWatcher::ScanSubdirectory(const QString &path, const CollectionSu
         qLog(Debug) << file << "is missing EBU R 128 loudness characteristics.";
       }
 
+      // If the song is unavailable and nothing has changed, just mark it as available without re-scanning
+      if (matching_song.unavailable() && !changed && !missing_fingerprint && !missing_loudness_characteristics) {
+        qLog(Debug) << "Unavailable song" << file << "restored without re-scanning.";
+        t->readded_songs << matching_songs;
+      }
       // The song's changed or missing fingerprint - create fingerprint and reread the metadata from file.
-      if (t->ignores_mtime() || changed || missing_fingerprint || missing_loudness_characteristics) {
+      else if (t->ignores_mtime() || changed || missing_fingerprint || missing_loudness_characteristics) {
 
         QString fingerprint;
 #ifdef HAVE_SONGFINGERPRINTING
@@ -726,12 +731,6 @@ void CollectionWatcher::ScanSubdirectory(const QString &path, const CollectionSu
         else {  // If CUE associated.
           UpdateCueAssociatedSongs(file, path, fingerprint, new_cue, art_automatic, matching_songs, t);
         }
-      }
-
-      // Nothing has changed - mark the song available without re-scanning
-      else if (matching_song.unavailable()) {
-        qLog(Debug) << "Unavailable song" << file << "restored.";
-        t->readded_songs << matching_songs;
       }
 
     }

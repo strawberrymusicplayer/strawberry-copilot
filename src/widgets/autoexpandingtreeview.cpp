@@ -204,18 +204,12 @@ void AutoExpandingTreeView::currentChanged(const QModelIndex &current, const QMo
     const QRect viewport_rect = viewport()->rect();
 
     // Calculate if we need to scroll to keep the item visible
-    // Check if the item is partially or completely outside the viewport
-    const bool item_above_viewport = item_rect.bottom() < viewport_rect.top();
-    const bool item_below_viewport = item_rect.top() > viewport_rect.bottom();
-    const bool item_partially_below = item_rect.bottom() > viewport_rect.bottom() && item_rect.top() <= viewport_rect.bottom();
-    const bool item_partially_above = item_rect.top() < viewport_rect.top() && item_rect.bottom() >= viewport_rect.top();
-
-    if (item_below_viewport || item_partially_below) {
-      // Item is below or partially below the viewport, scroll it to the bottom
+    // If the item extends below the viewport, scroll it to the bottom
+    // If the item extends above the viewport, scroll it to the top
+    if (item_rect.bottom() > viewport_rect.bottom()) {
       scrollTo(current, QAbstractItemView::PositionAtBottom);
     }
-    else if (item_above_viewport || item_partially_above) {
-      // Item is above or partially above the viewport, scroll it to the top
+    else if (item_rect.top() < viewport_rect.top()) {
       scrollTo(current, QAbstractItemView::PositionAtTop);
     }
   }

@@ -55,6 +55,7 @@ class AutoExpandingTreeView : public QTreeView {
  protected:
   // QAbstractItemView
   void reset() override;
+  void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
 
   // QWidget
   void mousePressEvent(QMouseEvent *event) override;

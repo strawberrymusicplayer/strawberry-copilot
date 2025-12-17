@@ -90,9 +90,6 @@ class StreamingCollectionView : public AutoExpandingTreeView {
   void RemoveSongs(const SongList &songs);
 
  protected:
-  // QAbstractItemView
-  void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
-
   // QWidget
   void paintEvent(QPaintEvent *event) override;
   void mouseReleaseEvent(QMouseEvent *e) override;

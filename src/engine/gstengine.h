@@ -48,6 +48,11 @@ class QTimer;
 class QTimerEvent;
 class TaskManager;
 
+struct GstUrl {
+  QByteArray url;
+  QString source_device;
+};
+
 class GstEngine : public EngineBase, public GstBufferConsumer {
   Q_OBJECT
 
@@ -123,7 +128,7 @@ class GstEngine : public EngineBase, public GstBufferConsumer {
   void PipelineFinished(const int pipeline_id);
 
  private:
-  QByteArray FixupUrl(const QUrl &url);
+  GstUrl FixupUrl(const QUrl &url);
 
   void StartFadeout(GstEnginePipelinePtr pipeline);
   void StartFadeoutPause();
@@ -192,8 +197,6 @@ class GstEngine : public EngineBase, public GstBufferConsumer {
   State delayed_state_;
   bool delayed_state_pause_;
   quint64 delayed_state_offset_nanosec_;
-
-  QString pending_source_device_;
 };
 
 #endif  // GSTENGINE_H

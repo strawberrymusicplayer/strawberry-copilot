@@ -81,6 +81,7 @@
 #include "utilities/coverutils.h"
 #include "utilities/coveroptions.h"
 #include "tagreader/tagreaderclient.h"
+#include "tagreader/id3v2version.h"
 #include "widgets/busyindicator.h"
 #include "widgets/lineedit.h"
 #include "collection/collectionbackend.h"
@@ -1416,12 +1417,13 @@ void EditTagDialog::SaveData() {
         save_tag_cover_data.cover_data = ref.cover_result_.image_data;
       }
       
-      // Set ID3v2 version based on user selection
+      // Determine ID3v2 version based on user selection
+      ID3v2Version id3v2_version = ID3v2Version::Default;
       if (ref.current_.filetype() == Song::FileType::MPEG || 
           ref.current_.filetype() == Song::FileType::WAV || 
           ref.current_.filetype() == Song::FileType::AIFF) {
         // Get the selected version from combobox
-        save_tag_cover_data.id3v2_version = (ui_->combobox_id3v2_version->currentIndex() == kComboBoxIndex_ID3v2_3) ? kID3v2_Version_3 : kID3v2_Version_4;
+        id3v2_version = (ui_->combobox_id3v2_version->currentIndex() == kComboBoxIndex_ID3v2_3) ? ID3v2Version::V3 : ID3v2Version::V4;
       }
       
       TagReaderClient::SaveOptions save_tags_options;
@@ -1437,7 +1439,7 @@ void EditTagDialog::SaveData() {
       if (save_embedded_cover) {
         save_tags_options |= TagReaderClient::SaveOption::Cover;
       }
-      TagReaderReplyPtr reply = tagreader_client_->WriteFileAsync(ref.current_.url().toLocalFile(), ref.current_, save_tags_options, save_tag_cover_data);
+      TagReaderReplyPtr reply = tagreader_client_->WriteFileAsync(ref.current_.url().toLocalFile(), ref.current_, save_tags_options, save_tag_cover_data, id3v2_version);
       SharedPtr<QMetaObject::Connection> connection = make_shared<QMetaObject::Connection>();
       *connection = QObject::connect(&*reply, &TagReaderReply::Finished, this, [this, reply, ref, connection]() {
         SongSaveTagsComplete(reply, ref.current_.url().toLocalFile(), ref.current_, ref.cover_action_);

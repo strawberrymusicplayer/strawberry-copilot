@@ -27,6 +27,7 @@
 #include "tagreaderrequest.h"
 #include "savetagsoptions.h"
 #include "savetagcoverdata.h"
+#include "id3v2version.h"
 
 using std::make_shared;
 
@@ -39,6 +40,7 @@ class TagReaderWriteFileRequest : public TagReaderRequest {
   SaveTagsOptions save_tags_options;
   Song song;
   SaveTagCoverData save_tag_cover_data;
+  ID3v2Version id3v2_version;
 };
 
 using TagReaderWriteFileRequestPtr = SharedPtr<TagReaderWriteFileRequest>;

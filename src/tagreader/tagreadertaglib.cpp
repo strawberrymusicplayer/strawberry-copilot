@@ -1054,7 +1054,7 @@ void TagReaderTagLib::ParseASFAttribute(const TagLib::ASF::AttributeListMap &att
 
 }
 
-TagReaderResult TagReaderTagLib::WriteFile(const QString &filename, const Song &song, const SaveTagsOptions save_tags_options, const SaveTagCoverData &save_tag_cover_data) const {
+TagReaderResult TagReaderTagLib::WriteFile(const QString &filename, const Song &song, const SaveTagsOptions save_tags_options, const SaveTagCoverData &save_tag_cover_data, const ID3v2Version id3v2_version) const {
 
   if (filename.isEmpty()) {
     return TagReaderResult::ErrorCode::FilenameMissing;
@@ -1277,25 +1277,30 @@ TagReaderResult TagReaderTagLib::WriteFile(const QString &filename, const Song &
     }
   }
 
-  // Determine ID3v2 version to use
-  int id3v2_version = save_tag_cover_data.id3v2_version;
-  if (id3v2_version != kID3v2_Version_3 && id3v2_version != kID3v2_Version_4) {
-    id3v2_version = kID3v2_Version_4;  // Default to v2.4 if not specified
+  // Determine ID3v2 version to use and convert to TagLib type
+  TagLib::ID3v2::Version taglib_version = TagLib::ID3v2::v4;  // Default to v2.4
+  
+  if (id3v2_version == ID3v2Version::V3) {
+    taglib_version = TagLib::ID3v2::v3;
   }
+  else if (id3v2_version == ID3v2Version::V4) {
+    taglib_version = TagLib::ID3v2::v4;
+  }
+  // For ID3v2Version::Default, use v4 as default
 
   bool success = false;
   
   // For MPEG files, use save with ID3v2 version parameter
   if (TagLib::MPEG::File *file_mpeg = dynamic_cast<TagLib::MPEG::File*>(fileref->file())) {
-    success = file_mpeg->save(TagLib::MPEG::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+    success = file_mpeg->save(TagLib::MPEG::File::AllTags, TagLib::File::StripOthers, taglib_version);
   }
   // For WAV files with ID3v2 tags
   else if (TagLib::RIFF::WAV::File *file_wav = dynamic_cast<TagLib::RIFF::WAV::File*>(fileref->file())) {
-    success = file_wav->save(TagLib::RIFF::WAV::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+    success = file_wav->save(TagLib::RIFF::WAV::File::AllTags, TagLib::File::StripOthers, taglib_version);
   }
   // For AIFF files with ID3v2 tags
   else if (TagLib::RIFF::AIFF::File *file_aiff = dynamic_cast<TagLib::RIFF::AIFF::File*>(fileref->file())) {
-    success = file_aiff->save(TagLib::RIFF::AIFF::File::AllTags, TagLib::File::StripOthers, id3v2_version);
+    success = file_aiff->save(TagLib::RIFF::AIFF::File::AllTags, TagLib::File::StripOthers, taglib_version);
   }
   // For all other file types, use default save
   else {

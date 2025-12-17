@@ -107,6 +107,12 @@ using namespace Qt::Literals::StringLiterals;
 namespace {
 constexpr char kSettingsGroup[] = "EditTagDialog";
 constexpr int kSmallImageSize = 128;
+
+// ID3v2 version constants
+constexpr int kID3v2_Version_3 = 3;
+constexpr int kID3v2_Version_4 = 4;
+constexpr int kComboBoxIndex_ID3v2_3 = 0;
+constexpr int kComboBoxIndex_ID3v2_4 = 1;
 }  // namespace
 
 const char EditTagDialog::kTagsDifferentHintText[] = QT_TR_NOOP("(different across multiple songs)");
@@ -868,13 +874,13 @@ void EditTagDialog::SelectionChanged() {
     // Set default based on existing version(s)
     if (id3v2_version_different || id3v2_version == 0) {
       // Mixed versions or unknown - default to ID3v2.4
-      ui_->combobox_id3v2_version->setCurrentIndex(1);  // 2.4
+      ui_->combobox_id3v2_version->setCurrentIndex(kComboBoxIndex_ID3v2_4);
     }
-    else if (id3v2_version == 3) {
-      ui_->combobox_id3v2_version->setCurrentIndex(0);  // 2.3
+    else if (id3v2_version == kID3v2_Version_3) {
+      ui_->combobox_id3v2_version->setCurrentIndex(kComboBoxIndex_ID3v2_3);
     }
     else {
-      ui_->combobox_id3v2_version->setCurrentIndex(1);  // 2.4
+      ui_->combobox_id3v2_version->setCurrentIndex(kComboBoxIndex_ID3v2_4);
     }
   }
 
@@ -1414,8 +1420,8 @@ void EditTagDialog::SaveData() {
       if (ref.current_.filetype() == Song::FileType::MPEG || 
           ref.current_.filetype() == Song::FileType::WAV || 
           ref.current_.filetype() == Song::FileType::AIFF) {
-        // Get the selected version from combobox: 0 = v2.3, 1 = v2.4
-        save_tag_cover_data.id3v2_version = (ui_->combobox_id3v2_version->currentIndex() == 0) ? 3 : 4;
+        // Get the selected version from combobox
+        save_tag_cover_data.id3v2_version = (ui_->combobox_id3v2_version->currentIndex() == kComboBoxIndex_ID3v2_3) ? kID3v2_Version_3 : kID3v2_Version_4;
       }
       
       TagReaderClient::SaveOptions save_tags_options;

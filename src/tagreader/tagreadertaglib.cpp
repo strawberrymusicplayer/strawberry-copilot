@@ -150,6 +150,10 @@ constexpr char kID3v2_MusicBrainz_DiscId[] = "MusicBrainz Disc Id";
 constexpr char kID3v2_MusicBrainz_ReleaseGroupId[] = "MusicBrainz Release Group Id";
 constexpr char kID3v2_MusicBrainz_WorkId[] = "MusicBrainz Work Id";
 
+// ID3v2 version constants
+constexpr int kID3v2_Version_3 = 3;
+constexpr int kID3v2_Version_4 = 4;
+
 constexpr char kVorbisComment_AlbumArtist1[] = "ALBUMARTIST";
 constexpr char kVorbisComment_AlbumArtist2[] = "ALBUM ARTIST";
 constexpr char kVorbisComment_AlbumArtistSort[] = "ALBUMARTISTSORT";
@@ -604,6 +608,8 @@ TagReaderResult TagReaderTagLib::ReadStream(const QUrl &url,
 #endif  // HAVE_STREAMTAGREADER
 
 void TagReaderTagLib::ParseID3v2Tags(TagLib::ID3v2::Tag *tag, QString *disc, QString *compilation, Song *song) const {
+
+  if (!tag) return;
 
   TagLib::ID3v2::FrameListMap map = tag->frameListMap();
 
@@ -1273,8 +1279,8 @@ TagReaderResult TagReaderTagLib::WriteFile(const QString &filename, const Song &
 
   // Determine ID3v2 version to use
   int id3v2_version = save_tag_cover_data.id3v2_version;
-  if (id3v2_version != 3 && id3v2_version != 4) {
-    id3v2_version = 4;  // Default to v2.4 if not specified
+  if (id3v2_version != kID3v2_Version_3 && id3v2_version != kID3v2_Version_4) {
+    id3v2_version = kID3v2_Version_4;  // Default to v2.4 if not specified
   }
 
   bool success = false;

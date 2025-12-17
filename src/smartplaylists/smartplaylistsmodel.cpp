@@ -269,6 +269,44 @@ PlaylistGeneratorPtr SmartPlaylistsModel::CreateGenerator(const QModelIndex &idx
 
 }
 
+void SmartPlaylistsModel::RestoreDefaults() {
+
+  // Clear all existing items from the model
+  root_->ClearNotify();
+
+  Settings s;
+  s.beginGroup(kSettingsGroup);
+
+  // Count the default playlists
+  int playlist_index = 0;
+  for (const GeneratorList &generators : default_smart_playlists_) {
+    playlist_index += static_cast<int>(generators.count());
+  }
+
+  // Write all default playlists to settings
+  s.beginWriteArray(collection_backend_->songs_table(), playlist_index);
+  playlist_index = 0;
+  for (const GeneratorList &generators : default_smart_playlists_) {
+    for (PlaylistGeneratorPtr gen : generators) {
+      SaveGenerator(&s, playlist_index++, gen);
+    }
+  }
+  s.endArray();
+
+  // Reset the version to the current default count
+  s.setValue(collection_backend_->songs_table() + u"_version"_s, default_smart_playlists_.count());
+
+  // Reload all items from settings
+  const int count = s.beginReadArray(collection_backend_->songs_table());
+  for (int i = 0; i < count; ++i) {
+    s.setArrayIndex(i);
+    ItemFromSmartPlaylist(s, true);
+  }
+  s.endArray();
+  s.endGroup();
+
+}
+
 QVariant SmartPlaylistsModel::data(const QModelIndex &idx, const int role) const {
 
   if (!idx.isValid()) return QVariant();

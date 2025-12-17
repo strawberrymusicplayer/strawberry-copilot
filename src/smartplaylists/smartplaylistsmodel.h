@@ -66,6 +66,7 @@ class SmartPlaylistsModel : public SimpleTreeModel<SmartPlaylistsItem> {
   void AddGenerator(PlaylistGeneratorPtr gen);
   void UpdateGenerator(const QModelIndex &idx, PlaylistGeneratorPtr gen);
   void DeleteGenerator(const QModelIndex &idx);
+  void RestoreDefaults();
 
  private:
   QVariant data(const QModelIndex &idx, int role = Qt::DisplayRole) const override;

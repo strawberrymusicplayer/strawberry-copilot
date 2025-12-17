@@ -209,10 +209,8 @@ void Organize::ProcessSomeFiles() {
         
         // Check if the destination file already exists and we're not allowed to overwrite
         QString dest_filename_with_new_ext = Utilities::FiddleFileExtension(task.song_info_.new_filename_, preset.extension_);
-        QString full_dest_path = destination_->LocalPath() + QLatin1Char('/') + dest_filename_with_new_ext;
-        
-        if (!overwrite_ && QFile::exists(full_dest_path)) {
-          qLog(Debug) << "Skipping" << task.song_info_.song_.url().toLocalFile() << "- destination file already exists:" << full_dest_path;
+        if (ShouldSkipFile(dest_filename_with_new_ext)) {
+          qLog(Debug) << "Skipping" << task.song_info_.song_.url().toLocalFile() << "- destination file already exists";
           tasks_complete_++;
           continue;
         }
@@ -234,9 +232,8 @@ void Organize::ProcessSomeFiles() {
     }
 
     // Check if the destination file already exists and we're not allowed to overwrite
-    QString full_dest_path = destination_->LocalPath() + QLatin1Char('/') + task.song_info_.new_filename_;
-    if (!overwrite_ && QFile::exists(full_dest_path)) {
-      qLog(Debug) << "Skipping" << task.song_info_.song_.url().toLocalFile() << "- destination file already exists:" << full_dest_path;
+    if (ShouldSkipFile(task.song_info_.new_filename_)) {
+      qLog(Debug) << "Skipping" << task.song_info_.song_.url().toLocalFile() << "- destination file already exists";
       tasks_complete_++;
       continue;
     }
@@ -308,6 +305,15 @@ void Organize::ProcessSomeFiles() {
     process_files_timer_->start();
   }
 
+
+}
+
+bool Organize::ShouldSkipFile(const QString &filename) const {
+
+  if (overwrite_) return false;
+
+  QString full_dest_path = destination_->LocalPath() + QLatin1Char('/') + filename;
+  return QFile::exists(full_dest_path);
 
 }
 

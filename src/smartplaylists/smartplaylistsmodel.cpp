@@ -277,15 +277,15 @@ void SmartPlaylistsModel::RestoreDefaults() {
   Settings s;
   s.beginGroup(kSettingsGroup);
 
-  // Count the default playlists
-  int playlist_index = 0;
+  // Count total default playlists
+  int total_defaults = 0;
   for (const GeneratorList &generators : default_smart_playlists_) {
-    playlist_index += static_cast<int>(generators.count());
+    total_defaults += static_cast<int>(generators.count());
   }
 
   // Write all default playlists to settings
-  s.beginWriteArray(collection_backend_->songs_table(), playlist_index);
-  playlist_index = 0;
+  s.beginWriteArray(collection_backend_->songs_table(), total_defaults);
+  int playlist_index = 0;
   for (const GeneratorList &generators : default_smart_playlists_) {
     for (PlaylistGeneratorPtr gen : generators) {
       SaveGenerator(&s, playlist_index++, gen);
@@ -293,7 +293,7 @@ void SmartPlaylistsModel::RestoreDefaults() {
   }
   s.endArray();
 
-  // Reset the version to the current default count
+  // Set version to indicate all default generations have been written
   s.setValue(collection_backend_->songs_table() + u"_version"_s, default_smart_playlists_.count());
 
   // Reload all items from settings

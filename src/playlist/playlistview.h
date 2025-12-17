@@ -163,6 +163,7 @@ class PlaylistView : public QTreeView {
   void SetHeaderState();
   void HeaderSectionResized(const int logical_index, const int old_size, const int new_size);
   void InhibitAutoscrollTimeout();
+  void ScrollFinished();
   void MaybeAutoscroll(const Playlist::AutoScroll autoscroll);
   void InvalidateCachedCurrentPixmap();
   void PlaylistDestroyed();
@@ -268,6 +269,8 @@ class PlaylistView : public QTreeView {
   QTimer *inhibit_autoscroll_timer_;
   bool inhibit_autoscroll_;
   bool currently_autoscrolling_;
+  QTimer *scroll_finished_timer_;
+  bool is_scrolling_;
 
   int row_height_;  // Used to invalidate the currenttrack_bar pixmaps
   QList<QPixmap> currenttrack_bar_left_;

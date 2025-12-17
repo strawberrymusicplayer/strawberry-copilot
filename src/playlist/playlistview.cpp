@@ -127,6 +127,7 @@ PlaylistView::PlaylistView(QWidget *parent)
       inhibit_autoscroll_timer_(new QTimer(this)),
       inhibit_autoscroll_(false),
       currently_autoscrolling_(false),
+      is_scrolling_(false),
       row_height_(-1),
       currenttrack_play_(u":/pictures/currenttrack_play.png"_s),
       currenttrack_pause_(u":/pictures/currenttrack_pause.png"_s),
@@ -167,6 +168,11 @@ PlaylistView::PlaylistView(QWidget *parent)
   inhibit_autoscroll_timer_->setInterval(kAutoscrollGraceTimeout * 1000);
   inhibit_autoscroll_timer_->setSingleShot(true);
   QObject::connect(inhibit_autoscroll_timer_, &QTimer::timeout, this, &PlaylistView::InhibitAutoscrollTimeout);
+
+  scroll_finished_timer_ = new QTimer(this);
+  scroll_finished_timer_->setInterval(150);  // 150ms after scrolling stops
+  scroll_finished_timer_->setSingleShot(true);
+  QObject::connect(scroll_finished_timer_, &QTimer::timeout, this, &PlaylistView::ScrollFinished);
 
   horizontalScrollBar()->installEventFilter(this);
   verticalScrollBar()->installEventFilter(this);
@@ -654,7 +660,15 @@ void PlaylistView::timerEvent(QTimerEvent *event) {
 void PlaylistView::GlowIntensityChanged() {
   glow_intensity_step_ = (glow_intensity_step_ + 1) % (kGlowIntensitySteps * 2);
 
-  viewport()->update(last_glow_rect_);
+  // Skip glow updates during active scrolling to reduce CPU usage
+  if (is_scrolling_) {
+    return;
+  }
+
+  // Only update if the glow rect is visible to avoid expensive repaints during scrolling
+  if (!last_glow_rect_.isEmpty() && viewport()->rect().intersects(last_glow_rect_)) {
+    viewport()->update(last_glow_rect_);
+  }
 }
 
 void PlaylistView::StopGlowing() {
@@ -946,6 +960,10 @@ void PlaylistView::scrollContentsBy(const int dx, const int dy) {
     // We only want to do this if the scroll was initiated by the user
     inhibit_autoscroll_ = true;
     inhibit_autoscroll_timer_->start();
+    
+    // Mark that we're scrolling and restart the timer
+    is_scrolling_ = true;
+    scroll_finished_timer_->start();
   }
 
 }
@@ -953,6 +971,14 @@ void PlaylistView::scrollContentsBy(const int dx, const int dy) {
 void PlaylistView::InhibitAutoscrollTimeout() {
   // For 30 seconds after the user clicks on or scrolls the playlist we promise not to automatically scroll the view to keep up with a track change.
   inhibit_autoscroll_ = false;
+}
+
+void PlaylistView::ScrollFinished() {
+  is_scrolling_ = false;
+  // Force an update of the glow rect when scrolling finishes
+  if (currently_glowing_ && !last_glow_rect_.isEmpty()) {
+    viewport()->update(last_glow_rect_);
+  }
 }
 
 void PlaylistView::MaybeAutoscroll(const Playlist::AutoScroll autoscroll) {

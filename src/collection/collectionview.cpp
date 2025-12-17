@@ -698,6 +698,36 @@ void CollectionView::scrollTo(const QModelIndex &idx, ScrollHint hint) {
 
 }
 
+void CollectionView::currentChanged(const QModelIndex &current, const QModelIndex &previous) {
+
+  QTreeView::currentChanged(current, previous);
+
+  // Ensure the newly selected item is visible after keyboard navigation.
+  // This fixes the issue where the cursor highlight disappears off-screen
+  // when using arrow keys to navigate through expanded lists.
+  if (current.isValid()) {
+    const QRect item_rect = visualRect(current);
+    const QRect viewport_rect = viewport()->rect();
+    
+    // Calculate if we need to scroll to keep the item visible
+    // Check if the item is partially or completely outside the viewport
+    const bool item_above_viewport = item_rect.bottom() < viewport_rect.top();
+    const bool item_below_viewport = item_rect.top() > viewport_rect.bottom();
+    const bool item_partially_below = item_rect.bottom() > viewport_rect.bottom() && item_rect.top() <= viewport_rect.bottom();
+    const bool item_partially_above = item_rect.top() < viewport_rect.top() && item_rect.bottom() >= viewport_rect.top();
+    
+    if (item_below_viewport || item_partially_below) {
+      // Item is below or partially below the viewport, scroll it to the bottom
+      scrollTo(current, QAbstractItemView::PositionAtBottom);
+    }
+    else if (item_above_viewport || item_partially_above) {
+      // Item is above or partially above the viewport, scroll it to the top
+      scrollTo(current, QAbstractItemView::PositionAtTop);
+    }
+  }
+
+}
+
 SongList CollectionView::GetSelectedSongs() const {
 
   QModelIndexList selected_indexes = filter_->mapSelectionToSource(selectionModel()->selection()).indexes();

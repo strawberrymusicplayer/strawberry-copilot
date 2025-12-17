@@ -114,6 +114,9 @@ class CollectionView : public AutoExpandingTreeView {
   void Error(const QString &error);
 
  protected:
+  // QAbstractItemView
+  void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
+
   // QWidget
   void paintEvent(QPaintEvent *event) override;
   void keyPressEvent(QKeyEvent *e) override;

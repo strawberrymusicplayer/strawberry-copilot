@@ -266,6 +266,12 @@ PlaylistGeneratorPtr SmartPlaylistsModel::CreateGenerator(const QModelIndex &idx
 
 }
 
+// Helper method to write default playlists to settings.
+// Used by both Init() for incremental updates and RestoreDefaults() for full restore.
+// Parameters:
+//   s - Settings object with an active write array
+//   start_version - Index in default_smart_playlists_ to start writing from
+//   start_index - Array index in settings to start writing to
 void SmartPlaylistsModel::WriteDefaultsToSettings(Settings *s, int start_version, int start_index) {
 
   int playlist_index = start_index;

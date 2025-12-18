@@ -80,6 +80,7 @@ class SmartPlaylistsModel : public SimpleTreeModel<SmartPlaylistsItem> {
 
   static void SaveGenerator(Settings *s, const int i, PlaylistGeneratorPtr generator);
   void ItemFromSmartPlaylist(const Settings &s, const bool notify);
+  void WriteDefaultsToSettings(Settings *s, int start_version, int start_index);
 
  private:
   SharedPtr<CollectionBackend> collection_backend_;

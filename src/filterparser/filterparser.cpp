@@ -192,7 +192,6 @@ bool FilterParser::checkOr(const bool step_over) {
               advance();
             }
             else {
-              buf_.reserve(2);
               buf_ += u'O';
               buf_ += u'R';
             }
@@ -310,6 +309,7 @@ FilterTree *FilterParser::createSearchTermTreeNode(const QString &column, const 
   FilterParserSearchTermComparator *cmp = nullptr;
 
   if (!column.isEmpty()) {
+    // Note: column is already lowercase from parseSearchTerm(), so case-sensitive lookup is correct
     const ColumnType columnType = getColumnTypeMap().value(column, ColumnType::Unknown);
     
     switch (columnType) {

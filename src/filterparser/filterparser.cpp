@@ -309,7 +309,9 @@ FilterTree *FilterParser::createSearchTermTreeNode(const QString &column, const 
   FilterParserSearchTermComparator *cmp = nullptr;
 
   if (!column.isEmpty()) {
-    // Note: column is already lowercase from parseSearchTerm(), so case-sensitive lookup is correct
+    // Note: Column names are converted to lowercase in parseSearchTerm() at line 268,
+    // making this case-sensitive hash lookup safe and maintaining backward compatibility
+    // with the previous case-insensitive QStringList.contains() calls.
     const ColumnType columnType = getColumnTypeMap().value(column, ColumnType::Unknown);
     
     switch (columnType) {

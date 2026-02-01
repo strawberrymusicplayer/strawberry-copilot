@@ -156,6 +156,7 @@ void DiscordRPC::ConnectToDiscord() {
 void DiscordRPC::OnConnected() {
 
   // Only process if we're in the connecting state
+  // This protects against double-calls (e.g., from both signal and manual call)
   if (state_ != State::Connecting) {
     return;
   }

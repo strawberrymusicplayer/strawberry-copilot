@@ -33,6 +33,8 @@ class Song;
 class Player;
 class PlaylistManager;
 
+class DiscordRPC;
+
 namespace discord {
 
 class RichPresence : public QObject {
@@ -42,7 +44,7 @@ class RichPresence : public QObject {
   explicit RichPresence(const SharedPtr<Player> player,
                         const SharedPtr<PlaylistManager> playlist_manager,
                         QObject *parent = nullptr);
-  ~RichPresence();
+  ~RichPresence() override;
 
   void ReloadSettings();
   void Stop();
@@ -70,6 +72,7 @@ class RichPresence : public QObject {
     qint64 seek_secs;
   };
   Activity activity_;
+  DiscordRPC *discord_rpc_;
   bool initialized_;
   int status_display_type_;
 };

@@ -96,20 +96,27 @@ void DiscordRPC::ConnectToDiscord() {
 
   state_ = State::Connecting;
 
+  // Try connecting to Discord IPC pipes/sockets
+  // Discord creates up to 10 IPC endpoints (0-9)
 #ifdef Q_OS_WIN
   // On Windows, Discord uses named pipes
   for (int i = 0; i < 10; ++i) {
     const QString pipe_name = QString("\\\\.\\pipe\\discord-ipc-%1").arg(i);
     socket_->connectToServer(pipe_name);
     if (socket_->waitForConnected(100)) {
-      return;  // Connected successfully
+      // Connection successful, OnConnected signal will be emitted or already was
+      // Call OnConnected manually to ensure proper state transition
+      if (state_ == State::Connecting) {
+        OnConnected();
+      }
+      return;
     }
   }
 #else
   // On Unix-like systems, Discord uses Unix domain sockets in temp directory
   QStringList temp_paths;
   
-  // Check various temp directories
+  // Check various temp directories in order of preference
   const QString xdg_runtime = qEnvironmentVariable("XDG_RUNTIME_DIR");
   if (!xdg_runtime.isEmpty()) temp_paths << xdg_runtime;
   
@@ -129,7 +136,12 @@ void DiscordRPC::ConnectToDiscord() {
       const QString socket_path = QString("%1/discord-ipc-%2").arg(temp_path).arg(i);
       socket_->connectToServer(socket_path);
       if (socket_->waitForConnected(100)) {
-        return;  // Connected successfully
+        // Connection successful, OnConnected signal will be emitted or already was
+        // Call OnConnected manually to ensure proper state transition
+        if (state_ == State::Connecting) {
+          OnConnected();
+        }
+        return;
       }
     }
   }
@@ -142,6 +154,11 @@ void DiscordRPC::ConnectToDiscord() {
 }
 
 void DiscordRPC::OnConnected() {
+
+  // Only process if we're in the connecting state
+  if (state_ != State::Connecting) {
+    return;
+  }
 
   state_ = State::SentHandshake;
   reconnect_delay_ = kReconnectMinDelayMs;
@@ -416,8 +433,29 @@ void DiscordRPC::UpdatePresence(const DiscordPresence &presence) {
 
 void DiscordRPC::ClearPresence() {
 
-  DiscordPresence empty_presence;
-  UpdatePresence(empty_presence);
+  if (state_ != State::Connected) {
+    return;
+  }
+
+  // To clear presence, send SET_ACTIVITY with null activity
+  QJsonObject obj;
+  obj["cmd"] = "SET_ACTIVITY";
+  obj["nonce"] = QString::number(nonce_++);
+
+  QJsonObject args;
+#ifdef Q_OS_WIN
+  args["pid"] = static_cast<qint64>(GetCurrentProcessId());
+#else
+  args["pid"] = static_cast<qint64>(getpid());
+#endif
+  // Don't add activity field or set it to null to clear presence
+  args["activity"] = QJsonValue::Null;
+
+  obj["args"] = args;
+
+  QJsonDocument doc(obj);
+  QByteArray data = doc.toJson(QJsonDocument::Compact);
+  SendFrame(data);
 
 }
 
